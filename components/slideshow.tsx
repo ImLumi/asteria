@@ -165,9 +165,34 @@ export function Slideshow({
     }
     window.addEventListener("wheel", onWheel, { passive: true })
     window.addEventListener("keydown", onKey)
+
+    // Érintéses görgetés: az ujj mozgása közvetlenül a képsort húzza
+    let lastY: number | null = null
+    const onTouchStart = (e: TouchEvent) => {
+      lastY = e.touches[0]?.clientY ?? null
+    }
+    const onTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY
+      const win = windowRef.current
+      if (y === undefined || lastY === null || !win) return
+      const step = win.clientHeight * (1 + GAP_RATIO)
+      move((lastY - y) / step)
+      lastY = y
+    }
+    const onTouchEnd = () => {
+      lastY = null
+    }
+    window.addEventListener("touchstart", onTouchStart, { passive: true })
+    window.addEventListener("touchmove", onTouchMove, { passive: true })
+    window.addEventListener("touchend", onTouchEnd)
+    window.addEventListener("touchcancel", onTouchEnd)
     return () => {
       window.removeEventListener("wheel", onWheel)
       window.removeEventListener("keydown", onKey)
+      window.removeEventListener("touchstart", onTouchStart)
+      window.removeEventListener("touchmove", onTouchMove)
+      window.removeEventListener("touchend", onTouchEnd)
+      window.removeEventListener("touchcancel", onTouchEnd)
     }
   }, [move, snapTo, close])
 
@@ -194,14 +219,18 @@ export function Slideshow({
       }
     }
 
-    const onGesture = () => {
+    const onGesture = (e: Event) => {
+      if (e instanceof KeyboardEvent && e.key === "Escape") return
       void request().then((ok) => {
         if (ok) removeGestureListeners()
       })
     }
+    const gestureEvents = ["pointerdown", "mousedown", "touchend", "click", "keydown"]
     const removeGestureListeners = () => {
-      window.removeEventListener("pointerdown", onGesture)
-      window.removeEventListener("keydown", onGesture)
+      for (const ev of gestureEvents) window.removeEventListener(ev, onGesture)
+    }
+    const addGestureListeners = () => {
+      for (const ev of gestureEvents) window.addEventListener(ev, onGesture)
     }
 
     document.addEventListener("fullscreenchange", onChange)
@@ -211,8 +240,7 @@ export function Slideshow({
       void request().then((ok) => {
         if (ok) return
         setNeedsGesture(true)
-        window.addEventListener("pointerdown", onGesture)
-        window.addEventListener("keydown", onGesture)
+        addGestureListeners()
       })
     }
 
@@ -226,11 +254,14 @@ export function Slideshow({
   }, [close])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black">
+    <div className="fixed inset-0 z-50 flex touch-none items-center justify-center overflow-hidden bg-black">
       <div
         ref={windowRef}
         className="relative overflow-hidden bg-black"
-        style={{ height: "94svh", aspectRatio: aspect, maxWidth: "100vw" }}
+        style={{
+          width: `min(100vw, calc(94svh * ${aspect}))`,
+          aspectRatio: aspect,
+        }}
       >
         <div ref={stripRef} className="absolute inset-0 will-change-transform">
           {frames.map((src, i) =>
@@ -241,7 +272,7 @@ export function Slideshow({
                 src={src}
                 alt={`${title} – ${i + 1}. kép`}
                 draggable={false}
-                className="absolute inset-x-0 size-full object-cover select-none"
+                className="absolute inset-x-0 size-full object-contain select-none"
                 style={{
                   top: `${i * (1 + GAP_RATIO) * 100}%`,
                   height: "100%",
@@ -259,7 +290,7 @@ export function Slideshow({
       )}
 
       {needsGesture && (
-        <p className="pointer-events-none absolute bottom-3 text-xs text-white/30">
+        <p className="pointer-events-none absolute bottom-3 text-xs text-white/60">
           Koppints vagy nyomj meg egy billentyűt a teljes képernyőhöz
         </p>
       )}

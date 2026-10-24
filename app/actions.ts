@@ -46,6 +46,50 @@ export async function createFilmstrip(
 
 export type FilmRef = { id: number; title: string }
 
+export async function updateFilmstrip(
+  id: number,
+  title: string,
+  firstImageUrl: string
+): Promise<{ ok: boolean; error?: string }> {
+  title = title.trim()
+  firstImageUrl = firstImageUrl.trim()
+  if (!Number.isInteger(id)) return { ok: false, error: "Érvénytelen diafilm." }
+  if (!title) return { ok: false, error: "A cím megadása kötelező." }
+  if (!isHttpUrl(firstImageUrl)) {
+    return { ok: false, error: "Érvényes http(s) linket adj meg." }
+  }
+
+  try {
+    await prisma.filmstrip.update({
+      where: { id },
+      data: { title, firstImageUrl },
+    })
+  } catch (error) {
+    console.error("Error updating filmstrip:", error)
+    return { ok: false, error: "A mentés nem sikerült." }
+  }
+
+  revalidatePath("/")
+  revalidatePath(`/film/${id}`)
+  return { ok: true }
+}
+
+export async function deleteFilmstrip(
+  id: number
+): Promise<{ ok: boolean; error?: string }> {
+  if (!Number.isInteger(id)) return { ok: false, error: "Érvénytelen diafilm." }
+
+  try {
+    await prisma.filmstrip.delete({ where: { id } })
+  } catch (error) {
+    console.error("Error deleting filmstrip:", error)
+    return { ok: false, error: "A törlés nem sikerült." }
+  }
+
+  revalidatePath("/")
+  return { ok: true }
+}
+
 export async function findFilmByNfcUid(uid: string): Promise<FilmRef | null> {
   try {
     const card = await prisma.nfcCard.findUnique({

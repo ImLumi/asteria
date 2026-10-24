@@ -42,7 +42,10 @@ function ServerSection() {
     <section className="grid gap-2">
       <div className="flex items-center justify-between">
         <Label htmlFor="ws-url">WebSocket szerver</Label>
-        <Badge variant={status === "open" ? "default" : "secondary"}>
+        <Badge
+          variant={status === "open" ? "default" : "secondary"}
+          className={status === "open" ? "bg-green-600 text-white" : undefined}
+        >
           {STATUS_LABEL[status]}
         </Badge>
       </div>
@@ -91,7 +94,10 @@ function DeviceSection() {
     <section className="grid gap-2">
       <div className="flex items-center justify-between">
         <Label>Eszköz</Label>
-        <Badge variant={connected ? "default" : "secondary"}>
+        <Badge
+          variant={connected ? "default" : "secondary"}
+          className={connected ? "bg-green-600 text-white" : undefined}
+        >
           {connected
             ? "Aktív eszköz"
             : pairedDevice
@@ -312,24 +318,52 @@ export function ControllerSettingsDialog({
 }
 
 export function ControllerSettingsButton() {
-  const { setSettingsOpen, status, pairedDevice, deviceOnline } =
+  const { setSettingsOpen, status, pairedDevice, deviceOnline, suggestions, pair } =
     useController()
+  const [dismissed, setDismissed] = useState<string | null>(null)
   const active = status === "open" && pairedDevice !== null && deviceOnline
+  const candidate =
+    status === "open" && !pairedDevice
+      ? suggestions.find((s) => s.device !== dismissed)
+      : undefined
 
   return (
-    <Button
-      variant="ghost"
-      size="icon-lg"
-      aria-label="Vezérlő beállítások"
-      className="relative"
-      onClick={() => setSettingsOpen(true)}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/icons/control_knob.svg" alt="" className="size-6 dark:invert" />
-      <span
-        aria-hidden
-        className={`absolute top-1.5 right-1.5 size-2 rounded-full ${active ? "bg-green-500" : "bg-muted-foreground/40"}`}
-      />
-    </Button>
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="icon-lg"
+        aria-label="Vezérlő beállítások"
+        className="relative"
+        onClick={() => setSettingsOpen(true)}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icons/control_knob.svg" alt="" className="size-6 dark:invert" />
+        <span
+          aria-hidden
+          className={`absolute top-1.5 right-1.5 size-2 rounded-full ${active ? "bg-green-500" : "bg-muted-foreground/40"}`}
+        />
+      </Button>
+
+      {candidate && (
+        <div
+          role="status"
+          className="absolute top-full right-0 z-40 mt-2 flex items-center gap-1 rounded-full border bg-popover py-1 pr-1 pl-3 text-xs whitespace-nowrap text-popover-foreground shadow-lg"
+        >
+          <span className="size-2 rounded-full bg-green-500" />
+          <span className="mr-1">Vezérlő elérhető</span>
+          <Button size="xs" onClick={() => pair(candidate.device)}>
+            Csatlakoztatás
+          </Button>
+          <button
+            type="button"
+            aria-label="Elrejtés"
+            className="px-2 text-muted-foreground hover:text-foreground"
+            onClick={() => setDismissed(candidate.device)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
