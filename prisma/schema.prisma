@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Diafilm: a címe és az első kép linkje kötelező.
+/// A további képek az első kép URL-jében lévő sorszám növelésével adódnak.
+model Filmstrip {
+  id            Int       @id @default(autoincrement())
+  title         String
+  firstImageUrl String
+  /// Cache: hány képkockát talált a vetítő (null = még nem derült ki)
+  frameCount    Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  nfcCards      NfcCard[]
+}
+
+/// Egy NFC kártya (uid) hozzárendelése egy diafilmhez.
+/// Egy uid egy diafilmhez tartozik, de egy diafilmhez több kártya is rendelhető.
+model NfcCard {
+  id          Int       @id @default(autoincrement())
+  uid         String    @unique
+  filmstripId Int
+  filmstrip   Filmstrip @relation(fields: [filmstripId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([filmstripId])
+}
