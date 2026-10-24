@@ -1,3 +1,4 @@
+import type { NextRequest } from "next/server"
 import type { WebSocket, WebSocketServer } from "ws"
 
 /**
@@ -114,8 +115,25 @@ function forwardToBrowsers(
   }
 }
 
-export function UPGRADE(client: WebSocket, _server: WebSocketServer) {
-  const clientIp = normalizeIp(getRemoteAddress(client))
+// Valódi kliens IP proxy/tunnel mögött: CF-Connecting-IP, majd X-Forwarded-For első eleme,
+// végül a socket címe
+function getClientIp(client: WebSocket, request?: NextRequest): string {
+  const h = request?.headers
+  const cf = h?.get("cf-connecting-ip")?.trim()
+  if (cf) return normalizeIp(cf)
+  const xff = h?.get("x-forwarded-for")?.split(",")[0]?.trim()
+  if (xff) return normalizeIp(xff)
+  const real = h?.get("x-real-ip")?.trim()
+  if (real) return normalizeIp(real)
+  return normalizeIp(getRemoteAddress(client))
+}
+
+export function UPGRADE(
+  client: WebSocket,
+  _server: WebSocketServer,
+  request?: NextRequest
+) {
+  const clientIp = getClientIp(client, request)
   clients.set(client, {
     role: "browser",
     ip: clientIp,
