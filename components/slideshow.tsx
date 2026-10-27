@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { XIcon } from "lucide-react"
 
 import { useController } from "@/components/controller-provider"
+import { enhancedFrameUrl } from "@/lib/enhanced-playback"
 import { buildFrameUrl } from "@/lib/frames"
 
 const MAX_FRAMES = 1000
@@ -27,9 +28,11 @@ function probeImage(src: string): Promise<{ w: number; h: number } | null> {
 export function Slideshow({
   title,
   firstImageUrl,
+  enhanced = null,
 }: {
   title: string
   firstImageUrl: string
+  enhanced?: { id: number; count: number; version: number } | null
 }) {
   const router = useRouter()
   const { subscribe } = useController()
@@ -47,9 +50,28 @@ export function Slideshow({
 
   const close = useCallback(() => router.push("/"), [router])
 
-  // Képkockák felderítése: addig növeljük a sorszámot, amíg van kép
+  // Képkockák felderítése: feljavított készletnél a helyi fájlok, különben a külső URL
   useEffect(() => {
     let cancelled = false
+
+    if (enhanced) {
+      const urls = Array.from({ length: enhanced.count }, (_, i) =>
+        enhancedFrameUrl(enhanced.id, i, enhanced.version)
+      )
+      void probeImage(urls[0] ?? "").then((size) => {
+        if (cancelled) return
+        if (!size) {
+          setFailed(true)
+          return
+        }
+        setAspect(size.w / size.h)
+        lengthRef.current = urls.length
+        setFrames(urls)
+      })
+      return () => {
+        cancelled = true
+      }
+    }
 
     async function load() {
       const first = buildFrameUrl(firstImageUrl, 0) ?? firstImageUrl
@@ -91,7 +113,7 @@ export function Slideshow({
     return () => {
       cancelled = true
     }
-  }, [firstImageUrl])
+  }, [firstImageUrl, enhanced])
 
   const move = useCallback((delta: number) => {
     const max = Math.max(lengthRef.current - 1, 0)

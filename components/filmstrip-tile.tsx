@@ -5,7 +5,9 @@ import Link from "next/link"
 import { PencilIcon } from "lucide-react"
 
 import { deleteFilmstrip, updateFilmstrip } from "@/app/actions"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { enhancedFrameUrl, enhancedPlayback } from "@/lib/enhanced-playback"
+import { cn } from "cn"
 import {
   Dialog,
   DialogContent,
@@ -17,11 +19,20 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-type Film = { id: number; title: string; firstImageUrl: string }
+type Film = {
+  id: number
+  title: string
+  firstImageUrl: string
+  enhanceQuality: boolean
+  enhancedFrameCount: number | null
+  enhancedSourceUrl: string | null
+  updatedAt: Date | string
+}
 
 function EditForm({ film, onDone }: { film: Film; onDone: () => void }) {
   const [title, setTitle] = useState(film.title)
   const [url, setUrl] = useState(film.firstImageUrl)
+  const [enhance, setEnhance] = useState(film.enhanceQuality)
   const [error, setError] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -61,6 +72,39 @@ function EditForm({ film, onDone }: { film: Film; onDone: () => void }) {
           required
         />
       </div>
+      <div className="flex items-center gap-2">
+        <input
+          id={`enhance-${film.id}`}
+          type="checkbox"
+          checked={enhance}
+          onChange={(e) => setEnhance(e.target.checked)}
+          className="size-4 accent-foreground"
+        />
+        <Label htmlFor={`enhance-${film.id}`}>Képminőség javítás</Label>
+      </div>
+      {enhance && (
+        <p className="text-xs text-muted-foreground">
+          Mentéskor letölti és feljavítja az összes diát. Ezután a vetítés a
+          lementett képeket használja, nem a külső linket.
+        </p>
+      )}
+      {url.trim() === film.firstImageUrl ? (
+        <Link
+          href={`/film/${film.id}/enhance`}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          Képminőség javítás
+        </Link>
+      ) : (
+        <Button type="button" variant="outline" disabled>
+          Képminőség javítás
+        </Button>
+      )}
+      <p className="text-xs text-muted-foreground">
+        {url.trim() === film.firstImageUrl
+          ? "Képenként kijelölhető a fehér és a fekete pont, illetve a dőlés. Jelölés nélkül automatikus a javítás."
+          : "A kezdő link változott. Előbb mentsd, utána nyílik a javító nézet."}
+      </p>
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -99,6 +143,7 @@ function EditForm({ film, onDone }: { film: Film; onDone: () => void }) {
 
 export function FilmstripTile({ film }: { film: Film }) {
   const [open, setOpen] = useState(false)
+  const playback = enhancedPlayback(film)
 
   return (
     <div className="group relative">
@@ -108,7 +153,11 @@ export function FilmstripTile({ film }: { film: Film }) {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={film.firstImageUrl}
+          src={
+            playback
+              ? enhancedFrameUrl(film.id, 0, playback.version)
+              : film.firstImageUrl
+          }
           alt={film.title}
           loading="lazy"
           className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -134,8 +183,8 @@ export function FilmstripTile({ film }: { film: Film }) {
           <DialogHeader>
             <DialogTitle>Diafilm szerkesztése</DialogTitle>
             <DialogDescription>
-              Módosítsd a címet vagy a kezdő kép linkjét, vagy töröld a
-              diafilmet.
+              Módosítsd a címet vagy a kezdő kép linkjét, nyisd meg a
+              képjavítót, vagy töröld a diafilmet.
             </DialogDescription>
           </DialogHeader>
           {open && <EditForm film={film} onDone={() => setOpen(false)} />}

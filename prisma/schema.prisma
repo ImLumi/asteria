@@ -20,6 +20,12 @@ model Filmstrip {
   firstImageUrl String
   /// Cache: hány képkockát talált a vetítő (null = még nem derült ki)
   frameCount    Int?
+  /// Bekapcsolva a vetítés a lementett, feljavított kockákat mutatja.
+  enhanceQuality      Boolean @default(false)
+  /// A feljavított készlet kockáinak száma (null = még nincs készlet).
+  enhancedFrameCount  Int?
+  /// Melyik kezdő URL-ből készült a feljavított készlet.
+  enhancedSourceUrl   String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   nfcCards      NfcCard[]

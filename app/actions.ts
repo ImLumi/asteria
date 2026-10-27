@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache"
 
+import { deleteEnhancedFrames, enhanceFilmstrip } from "@/lib/enhance"
+import { sanitizeMarkList, type FrameMarkSet } from "@/lib/enhance-marks"
 import prisma from "@/lib/prisma"
 
 export type CreateFilmstripState = {
@@ -74,6 +76,43 @@ export async function updateFilmstrip(
   return { ok: true }
 }
 
+export async function enhanceSavedFilmstrip(
+  id: number,
+  marks: FrameMarkSet[]
+): Promise<{ ok: boolean; error?: string }> {
+  if (!Number.isInteger(id)) return { ok: false, error: "Érvénytelen diafilm." }
+  const film = await prisma.filmstrip.findUnique({ where: { id } })
+  if (!film) return { ok: false, error: "A diafilm nem található." }
+
+  try {
+    const enhancedFrameCount = await enhanceFilmstrip(
+      id,
+      film.firstImageUrl,
+      sanitizeMarkList(marks)
+    )
+    await prisma.filmstrip.update({
+      where: { id },
+      data: {
+        enhanceQuality: true,
+        enhancedFrameCount,
+        enhancedSourceUrl: film.firstImageUrl,
+      },
+    })
+  } catch (error) {
+    console.error("Error enhancing filmstrip:", error)
+    const message =
+      error instanceof Error &&
+      (error.message.startsWith("A ") || error.message.startsWith("Nem "))
+        ? error.message
+        : "A javítás nem sikerült."
+    return { ok: false, error: message }
+  }
+
+  revalidatePath("/")
+  revalidatePath(`/film/${id}`)
+  return { ok: true }
+}
+
 export async function deleteFilmstrip(
   id: number
 ): Promise<{ ok: boolean; error?: string }> {
@@ -81,6 +120,9 @@ export async function deleteFilmstrip(
 
   try {
     await prisma.filmstrip.delete({ where: { id } })
+    await deleteEnhancedFrames(id).catch((fsError) => {
+      console.error("Error deleting enhanced frames:", fsError)
+    })
   } catch (error) {
     console.error("Error deleting filmstrip:", error)
     return { ok: false, error: "A törlés nem sikerült." }
