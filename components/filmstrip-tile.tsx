@@ -50,7 +50,7 @@ function EditForm({ film, onDone }: { film: Film; onDone: () => void }) {
       onSubmit={(e) => {
         e.preventDefault()
         setError(null)
-        run(() => updateFilmstrip(film.id, title, url))
+        run(() => updateFilmstrip(film.id, title, url, enhance))
       }}
     >
       <div className="grid gap-2">
@@ -84,8 +84,9 @@ function EditForm({ film, onDone }: { film: Film; onDone: () => void }) {
       </div>
       {enhance && (
         <p className="text-xs text-muted-foreground">
-          Mentéskor letölti és feljavítja az összes diát. Ezután a vetítés a
-          lementett képeket használja, nem a külső linket.
+          Bekapcsoláskor vagy a kezdő link módosításakor a mentés letölti és
+          automatikusan feljavítja az összes diát. A vetítés a lementett képeket
+          használja. Az újragenerálás felülírja a kézi javításokat.
         </p>
       )}
       {url.trim() === film.firstImageUrl ? (
@@ -134,8 +135,15 @@ function EditForm({ film, onDone }: { film: Film; onDone: () => void }) {
           </Button>
         )}
         <Button type="submit" disabled={pending}>
-          {pending ? "Mentés..." : "Mentés"}
-        </Button>
+            {pending
+              ? enhance &&
+                (!film.enhanceQuality ||
+                  film.enhancedSourceUrl !== url.trim() ||
+                  !film.enhancedFrameCount)
+                ? "Képek javítása..."
+                : "Mentés..."
+              : "Mentés"}
+          </Button>
       </DialogFooter>
     </form>
   )

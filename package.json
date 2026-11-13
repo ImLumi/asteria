@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:enhance": "node --import tsx --experimental-test-module-mocks --test tests/enhance-filmstrip.test.ts",
     "db:test": "tsx scripts/test-database.ts",
     "db:studio": "prisma studio",
     "prepare": "next-ws patch",

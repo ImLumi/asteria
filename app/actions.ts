@@ -51,7 +51,8 @@ export type FilmRef = { id: number; title: string }
 export async function updateFilmstrip(
   id: number,
   title: string,
-  firstImageUrl: string
+  firstImageUrl: string,
+  enhanceQuality: boolean
 ): Promise<{ ok: boolean; error?: string }> {
   title = title.trim()
   firstImageUrl = firstImageUrl.trim()
@@ -60,15 +61,44 @@ export async function updateFilmstrip(
   if (!isHttpUrl(firstImageUrl)) {
     return { ok: false, error: "Érvényes http(s) linket adj meg." }
   }
+  if (typeof enhanceQuality !== "boolean") {
+    return { ok: false, error: "Érvénytelen képjavítási beállítás." }
+  }
 
   try {
+    const film = await prisma.filmstrip.findUnique({ where: { id } })
+    if (!film) return { ok: false, error: "A diafilm nem található." }
+
+    const needsEnhancement =
+      enhanceQuality &&
+      (!film.enhanceQuality ||
+        film.enhancedSourceUrl !== firstImageUrl ||
+        !film.enhancedFrameCount ||
+        film.enhancedFrameCount < 1)
+    const enhancedFrameCount = needsEnhancement
+      ? await enhanceFilmstrip(id, firstImageUrl)
+      : film.enhancedFrameCount
+
     await prisma.filmstrip.update({
       where: { id },
-      data: { title, firstImageUrl },
+      data: {
+        title,
+        firstImageUrl,
+        enhanceQuality,
+        enhancedFrameCount,
+        enhancedSourceUrl: needsEnhancement
+          ? firstImageUrl
+          : film.enhancedSourceUrl,
+      },
     })
   } catch (error) {
     console.error("Error updating filmstrip:", error)
-    return { ok: false, error: "A mentés nem sikerült." }
+    const message =
+      error instanceof Error &&
+      (error.message.startsWith("A ") || error.message.startsWith("Nem "))
+        ? error.message
+        : "A mentés nem sikerült."
+    return { ok: false, error: message }
   }
 
   revalidatePath("/")

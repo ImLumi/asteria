@@ -230,7 +230,10 @@ async function downloadImage(url: string): Promise<Buffer | null> {
       redirect: "follow",
       headers: { Accept: "image/*" },
     })
-    if (!res.ok) return null
+    if (res.status === 404 || res.status === 410) return null
+    if (!res.ok) {
+      throw new Error(`A kép letöltése nem sikerült (HTTP ${res.status}).`)
+    }
     const type = (res.headers.get("content-type") ?? "").toLowerCase()
     if (type.startsWith("text/") || type.includes("html")) return null
     const declared = Number(res.headers.get("content-length") ?? "0")
@@ -244,7 +247,11 @@ async function downloadImage(url: string): Promise<Buffer | null> {
     }
     return buf
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith("A kép túl nagy")) {
+    if (
+      error instanceof Error &&
+      (error.message.startsWith("A kép túl nagy") ||
+        error.message.startsWith("A kép letöltése"))
+    ) {
       throw error
     }
     if (error instanceof Error && error.name === "AbortError") {
@@ -287,11 +294,12 @@ export async function enhanceFilmstrip(
       try {
         enhanced = await enhanceBuffer(buf, marksByIndex.get(i))
       } catch (error) {
-        if (i === 0) {
-          console.error("Error enhancing first frame:", error)
-          throw new Error("A kezdő kép nem dolgozható fel.")
-        }
-        break
+        console.error(`Error enhancing frame ${i}:`, error)
+        throw new Error(
+          i === 0
+            ? "A kezdő kép nem dolgozható fel."
+            : `A(z) ${i + 1}. kép nem dolgozható fel.`
+        )
       }
 
       await writeFile(path.join(tmp, `${i}.jpg`), enhanced)
