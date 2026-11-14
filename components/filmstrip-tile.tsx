@@ -158,7 +158,8 @@ export function FilmstripTile({ film }: { film: Film }) {
     <div className="group relative">
       <Link
         href={`/film/${film.id}`}
-        className="relative block aspect-4/3 overflow-hidden rounded-3xl bg-black ring-1 ring-foreground/10"
+        data-filmstrip-link
+        className="relative block aspect-4/3 overflow-hidden rounded-3xl bg-black ring-1 ring-foreground/10 focus:outline-4 focus:outline-offset-2 focus:outline-white"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

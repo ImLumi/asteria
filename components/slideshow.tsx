@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { XIcon } from "lucide-react"
 
 import { useController } from "@/components/controller-provider"
+import { createControllerDoubleClickDetector } from "@/lib/controller-double-click"
 import { enhancedFrameUrl } from "@/lib/enhanced-playback"
 import { buildFrameUrl, getDisplayImageUrl } from "@/lib/frames"
 
@@ -15,6 +16,7 @@ const GAP_RATIO = 0.04
 const RENDER_RADIUS = 3
 // Egy enkóder-lépés hány képkockányi mozgást jelent
 const ROTATE_FRAMES_PER_STEP = 1 / 40
+const CONTROLLER_DOUBLE_CLICK_MS = 400
 
 function probeImage(src: string): Promise<{ w: number; h: number } | null> {
   return new Promise((resolve) => {
@@ -159,18 +161,24 @@ export function Slideshow({
   }, [])
 
   useEffect(() => {
+    const doubleClick = createControllerDoubleClickDetector(CONTROLLER_DOUBLE_CLICK_MS)
     return subscribe((e) => {
       if (e.event === "rotate") {
+        doubleClick.reset()
         const steps = Math.abs(e.steps)
         move((e.dir === "CCW" ? -steps : steps) * ROTATE_FRAMES_PER_STEP)
       } else if (e.event === "click") {
+        if (doubleClick.click(performance.now())) {
+          close()
+          return
+        }
         // A képernyőn legnagyobb részt elfoglaló kocka kerül középre
         const max = Math.max(lengthRef.current - 1, 0)
         const nearest = Math.round(currentRef.current)
         targetRef.current = Math.min(Math.max(nearest, 0), max)
       }
     })
-  }, [subscribe, move])
+  }, [subscribe, move, close])
 
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
