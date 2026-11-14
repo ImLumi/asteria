@@ -2,6 +2,15 @@
 
 This is a Next.js template with shadcn/ui.
 
+## Vezérlés
+
+A vezérlő forgatásával a kezdőlapon a diafilmek között lehet lépkedni;
+a kijelölt diafilmet fehér keret jelzi. A vezérlő megnyomása megnyitja a
+kijelölt diafilmet. Ha még nincs kijelölés, az első diafilm nyílik meg.
+Nyitott párbeszédablak mellett a vezérlő nem vált diafilmet.
+A TV távirányítójának nyilaival is lehet lépkedni a csempék között;
+az OK/Enter megnyitja a kiválasztott diafilmet.
+
 ## Képminőség javítása
 
 A diafilm szerkesztésénél jelöld be a **Képminőség javítás** opciót és

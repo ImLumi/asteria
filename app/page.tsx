@@ -1,5 +1,6 @@
 import { AddFilmstripTile } from "@/components/add-filmstrip-tile"
 import { FilmstripTile } from "@/components/filmstrip-tile"
+import { FilmstripGrid } from "@/components/filmstrip-grid"
 import { FullscreenToggle } from "@/components/fullscreen-toggle"
 import { Starfield } from "@/components/starfield"
 import {
@@ -44,7 +45,7 @@ export default async function Page() {
             {error}
           </p>
         )}
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+        <FilmstripGrid>
           <AddFilmstripTile />
           {filmstrips.map((film) => (
             <FilmstripTile
@@ -60,7 +61,7 @@ export default async function Page() {
               }}
             />
           ))}
-        </div>
+        </FilmstripGrid>
       </div>
     </main>
   )
