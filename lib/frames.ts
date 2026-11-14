@@ -26,3 +26,10 @@ export function buildFrameUrl(firstImageUrl: string, index: number): string | nu
   url.pathname = segments.join("/")
   return url.toString()
 }
+
+export function getDisplayImageUrl(imageUrl: string): string {
+  if (!/^http:/i.test(imageUrl)) return imageUrl
+
+  const params = new URLSearchParams({ url: imageUrl, w: "3840", q: "75" })
+  return `/_next/image?${params.toString()}`
+}

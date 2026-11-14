@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { getDisplayImageUrl } from "@/lib/frames"
 
 type Film = {
   id: number
@@ -164,7 +165,7 @@ export function FilmstripTile({ film }: { film: Film }) {
           src={
             playback
               ? enhancedFrameUrl(film.id, 0, playback.version)
-              : film.firstImageUrl
+              : getDisplayImageUrl(film.firstImageUrl)
           }
           alt={film.title}
           loading="lazy"

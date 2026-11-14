@@ -17,6 +17,15 @@ a mentés hibát jelez, és a korábbi beállítás és képkészlet megmarad.
 
 A képjavítás integrációs tesztje: `npm run test:enhance`.
 
+## HTTP image sources
+
+HTTP filmstrip images are fetched and cached by the Next.js image optimizer and
+served from the application origin, including the cover and all slideshow
+frames. HTTPS images continue to load directly. The optimizer accepts public
+HTTP image URLs from any host, so its endpoint can also be used for other public
+HTTP images; Next.js blocks local and private IP addresses by default. Image
+optimization requires a writable Next.js image cache.
+
 ## Adding components
 
 To add components to your app, run the following command:

@@ -6,7 +6,7 @@ import { XIcon } from "lucide-react"
 
 import { useController } from "@/components/controller-provider"
 import { enhancedFrameUrl } from "@/lib/enhanced-playback"
-import { buildFrameUrl } from "@/lib/frames"
+import { buildFrameUrl, getDisplayImageUrl } from "@/lib/frames"
 
 const MAX_FRAMES = 1000
 const BATCH_SIZE = 6
@@ -74,7 +74,9 @@ export function Slideshow({
     }
 
     async function load() {
-      const first = buildFrameUrl(firstImageUrl, 0) ?? firstImageUrl
+      const first = getDisplayImageUrl(
+        buildFrameUrl(firstImageUrl, 0) ?? firstImageUrl
+      )
       const firstSize = await probeImage(first)
       if (cancelled) return
       if (!firstSize) {
@@ -91,7 +93,7 @@ export function Slideshow({
         const urls: string[] = []
         for (let j = i; j < Math.min(i + BATCH_SIZE, MAX_FRAMES); j++) {
           const url = buildFrameUrl(firstImageUrl, j)
-          if (url) urls.push(url)
+          if (url) urls.push(getDisplayImageUrl(url))
         }
         const results = await Promise.all(urls.map(probeImage))
         if (cancelled) return
