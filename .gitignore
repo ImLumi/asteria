@@ -40,3 +40,6 @@ pnpm-debug.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# feljavított diák (helyi tároló)
+/data

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 
 import { Slideshow } from "@/components/slideshow"
+import { enhancedPlayback } from "@/lib/enhanced-playback"
 import prisma from "@/lib/prisma"
 
 export const dynamic = "force-dynamic"
@@ -17,5 +18,11 @@ export default async function FilmPage({
   const film = await prisma.filmstrip.findUnique({ where: { id: filmId } })
   if (!film) notFound()
 
-  return <Slideshow title={film.title} firstImageUrl={film.firstImageUrl} />
+  return (
+    <Slideshow
+      title={film.title}
+      firstImageUrl={film.firstImageUrl}
+      enhanced={enhancedPlayback(film)}
+    />
+  )
 }

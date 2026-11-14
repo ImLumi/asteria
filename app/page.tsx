@@ -53,6 +53,10 @@ export default async function Page() {
                 id: film.id,
                 title: film.title,
                 firstImageUrl: film.firstImageUrl,
+                enhanceQuality: film.enhanceQuality,
+                enhancedFrameCount: film.enhancedFrameCount,
+                enhancedSourceUrl: film.enhancedSourceUrl,
+                updatedAt: film.updatedAt,
               }}
             />
           ))}
