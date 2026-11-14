@@ -10,6 +10,8 @@ kijelölt diafilmet. Ha még nincs kijelölés, az első diafilm nyílik meg.
 Nyitott párbeszédablak mellett a vezérlő nem vált diafilmet.
 A TV távirányítójának nyilaival is lehet lépkedni a csempék között;
 az OK/Enter megnyitja a kiválasztott diafilmet.
+Vetítés közben a vezérlő egyszeri megnyomása a legközelebbi képkockára
+igazít, két gyors egymást követő megnyomás pedig visszalép a főoldalra.
 
 ## Képminőség javítása
 
